@@ -5,13 +5,13 @@
 2. `gulp run`
 
 ### Layout
-Server: 
-  /src : Source files for server
-  /build : Server build
+##### Server: 
+  - /src : Source files for server
+  - /build : Server build
 
-Client:
-  /static : Source files for client
-  /static/build : Client build
+##### Client:
+  - /static : Source files for client
+  - /static/build : Client build
 
 ### Features
 - Webpack & HMR on client and server code! [https://github.com/jlongster/monkey-hot-loader](https://github.com/jlongster/monkey-hot-loader)
