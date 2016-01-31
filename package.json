@@ -1,5 +1,8 @@
 {
-  "name": "backend-with-webpack",
+  "name": "glider",
+  "version" : "0.0.1",
+  "url" : "https://github.com/10thfloor/glider.git",
+  "email" : "mackenzie@redacademy.com",
   "dependencies": {
     "babel-loader": "^4.2.0",
     "browser-sync": "^2.11.1",
