@@ -9,6 +9,8 @@ var nodemon = require('nodemon');
 var WebpackDevServer = require('webpack-dev-server');
 var httpProxy = require('http-proxy');
 var http = require('http');
+var browserSync = require('browser-sync');
+
 
 var deepmerge = new DeepMerge(function(target, source) {
   if(target instanceof Array) {
@@ -33,7 +35,7 @@ function config(overrides) {
 // frontend
 var frontendConfig = config({
   entry: [
-   './static/js/main.js',
+   './static/main.js',
    'webpack-dev-server/client?http://0.0.0.0:9000',
    'webpack/hot/dev-server'
    ],
@@ -45,6 +47,7 @@ var frontendConfig = config({
    module: {
      loaders: [
        {test: /\.js$/, exclude: /node_modules/, loaders: ['babel'] },
+       {test: /\.scss$/, loader: 'style!css!sass'}
      ]
    },
   plugins: [
@@ -86,7 +89,7 @@ var backendConfig = config({
   ],
   module: {
     loaders: [
-      {test: /\.js$/, exclude: /node_modules/, loaders: ['monkey-hot', 'babel'] },
+      {test: /\.js$/, exclude: /node_modules/, loaders: ['monkey-hot', 'babel'] }
     ]
   },
   recordsPath: path.join(__dirname, 'build/_records'),
@@ -181,6 +184,18 @@ gulp.task('frontend-watch', function() {
     else {
       console.log('webpack dev server listening at localhost:3000');
     }
+  });
+
+  browserSync.init({
+    baseDir: './static',
+    files: ['./static/index.html'],
+    proxy: {
+        target: 'localhost:9000',
+        ws: true
+    },
+    port: 8080,
+    ui: { port: 8081 },
+    open: true
   });
 
 });

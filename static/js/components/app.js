@@ -17,7 +17,7 @@ module.exports = React.createClass({
   render: function() {
     return (
       <div>
-        <button onClick={this.ping}>Ping socket server ... </button>
+        <button onClick={this.ping}>Ping socket server</button>
       </div>
     );
   }
