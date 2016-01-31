@@ -1,3 +1,5 @@
+'use strict';
+
 var gulp = require('gulp');
 var webpack = require('webpack');
 var path = require('path');
@@ -5,8 +7,10 @@ var fs = require('fs');
 var DeepMerge = require('deep-merge');
 var nodemon = require('nodemon');
 var WebpackDevServer = require('webpack-dev-server');
+var httpProxy = require('http-proxy');
+var http = require('http');
 
-var deepmerge = DeepMerge(function(target, source, key) {
+var deepmerge = new DeepMerge(function(target, source) {
   if(target instanceof Array) {
     return [].concat(target, source);
   }
@@ -15,17 +19,10 @@ var deepmerge = DeepMerge(function(target, source, key) {
 
 // generic
 
-var defaultConfig = {
-  module: {
-    loaders: [
-      {test: /\.js$/, exclude: /node_modules/, loaders: ['monkey-hot', 'babel'] },
-    ]
-  }
-};
+var defaultConfig = {};
 
 if(process.env.NODE_ENV !== 'production') {
-  //defaultConfig.devtool = '#eval-source-map';
-  defaultConfig.devtool = 'source-map';
+  defaultConfig.devtool = 'eval-source-map';
   defaultConfig.debug = true;
 }
 
@@ -34,20 +31,26 @@ function config(overrides) {
 }
 
 // frontend
-
 var frontendConfig = config({
   entry: [
-    'webpack-dev-server/client?http://localhost:3000',
-    'webpack/hot/only-dev-server',
-    './static/js/main.js'
-  ],
-  output: {
-    path: path.join(__dirname, 'static/build'),
-    publicPath: 'http://localhost:3000/build',
-    filename: 'frontend.js'
-  },
+   './static/js/main.js',
+   'webpack-dev-server/client?http://0.0.0.0:9000',
+   'webpack/hot/dev-server'
+   ],
+   output: {
+     path: path.join(__dirname, 'static/build'),
+     publicPath: 'http://localhost:9000/build',
+     filename: 'frontend.js'
+   },
+   module: {
+     loaders: [
+       {test: /\.js$/, exclude: /node_modules/, loaders: ['babel'] },
+     ]
+   },
   plugins: [
-    new webpack.HotModuleReplacementPlugin({ quiet: true })
+    new webpack.optimize.OccurenceOrderPlugin(),
+    new webpack.HotModuleReplacementPlugin({quiet: true}),
+    new webpack.NoErrorsPlugin()
   ]
 });
 
@@ -75,12 +78,17 @@ var backendConfig = config({
   externals: [
     function(context, request, callback) {
       var pathStart = request.split('/')[0];
-      if (nodeModules.indexOf(pathStart) >= 0 && request != 'webpack/hot/signal.js') {
-        return callback(null, "commonjs " + request);
-      };
+      if (nodeModules.indexOf(pathStart) >= 0 && request !== 'webpack/hot/signal.js') {
+        return callback(null, 'commonjs ' + request);
+      }
       callback();
     }
   ],
+  module: {
+    loaders: [
+      {test: /\.js$/, exclude: /node_modules/, loaders: ['monkey-hot', 'babel'] },
+    ]
+  },
   recordsPath: path.join(__dirname, 'build/_records'),
   plugins: [
     new webpack.IgnorePlugin(/\.(css|less)$/),
@@ -104,7 +112,7 @@ function onBuild(done) {
     if(done) {
       done();
     }
-  }
+  };
 }
 
 gulp.task('frontend-build', function(done) {
@@ -112,12 +120,61 @@ gulp.task('frontend-build', function(done) {
 });
 
 gulp.task('frontend-watch', function() {
-  //webpack(frontendConfig).watch(100, onBuild());
+
+  var webProxy = new httpProxy.createProxyServer({
+    target: {
+      host: 'localhost',
+      port: 3000
+    }
+  });
+
+   var clusterProxy = new httpProxy.createProxyServer({
+     target: {
+       host: 'localhost',
+       port: 8000,
+       ws: true
+     }
+   });
+
+   var hmrProxy = new httpProxy.createProxyServer({
+     target: {
+       host: 'localhost',
+       port: 3000,
+       ws: true
+     }
+   });
+
+  var server = http.createServer(function (req, res) {
+    webProxy.web(req, res);
+  });
+
+  server.on('upgrade', function (req, socket, head) {
+    if((req.url).indexOf('/socketcluster/') !== -1) {
+        console.log('proxying to sc server --', req.url);
+        clusterProxy.ws(req, socket, head);
+    }else{
+        console.log('proxying to webpack server --', req.url);
+        hmrProxy.ws(req, socket, head);
+    }
+  });
+
+  server.listen(9000);
 
   new WebpackDevServer(webpack(frontendConfig), {
     publicPath: frontendConfig.output.publicPath,
-    hot: true
-  }).listen(3000, 'localhost', function (err, result) {
+    contentBase: './static',
+    historyApiFallback: true,
+    hot: true,
+    stats: {
+      progress: true,
+      colors: true,
+      hash: false,
+      timings: true,
+      chunks: false,
+      chunkModules: false,
+      modules: false
+    }
+  }).listen(3000, 'localhost', function (err) {
     if(err) {
       console.log(err);
     }
@@ -134,12 +191,11 @@ gulp.task('backend-build', function(done) {
 
 gulp.task('backend-watch', function(done) {
   var firedDone = false;
-  webpack(backendConfig).watch(100, function(err, stats) {
+  webpack(backendConfig).watch(100, function() {
     if(!firedDone) {
       firedDone = true;
       done();
     }
-
     nodemon.restart();
   });
 });
@@ -157,6 +213,6 @@ gulp.task('run', ['backend-watch', 'frontend-watch'], function() {
     watch: ['foo/'],
     ext: 'noop'
   }).on('restart', function() {
-    console.log('Patched!');
+    console.log('Server process was monkey-hot-reloaded!');
   });
 });

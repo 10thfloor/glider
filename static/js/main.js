@@ -1,11 +1,16 @@
-import * as client from './client';
+import socketCluster from 'socketcluster-client';
 
-var socket = io.connect('http://localhost:4000', {
-  reconnection: false
-});
+import React from 'react';
+import ReactDOM from 'react-dom';
 
-socket.on('connect', () => {
-  client.register(socket);
-});
+import App from './components/app';
+
+var socket = socketCluster.connect();
+socket.emit('ping', 'Ping socket server ! ');
 
 
+ReactDOM.render(<App/>, document.querySelector('#mount'));
+
+if (module.hot) {
+  module.hot.accept();
+}
