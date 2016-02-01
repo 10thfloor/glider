@@ -11,6 +11,13 @@ var httpProxy = require('http-proxy');
 var http = require('http');
 var browserSync = require('browser-sync');
 
+// postcss
+var precss = require('precss');
+var autoprefixer = require('autoprefixer');
+var autoreset = require('postcss-autoreset');
+var cssnext = require('postcss-cssnext');
+
+// util
 
 var deepmerge = new DeepMerge(function(target, source) {
   if(target instanceof Array) {
@@ -19,7 +26,22 @@ var deepmerge = new DeepMerge(function(target, source) {
   return source;
 });
 
-// generic
+function onBuild(done) {
+  return function(err, stats) {
+    if(err) {
+      console.log('Error', err);
+    }
+    else {
+      console.log(stats.toString());
+    }
+
+    if(done) {
+      done();
+    }
+  };
+}
+
+// generic config
 
 var defaultConfig = {};
 
@@ -32,7 +54,8 @@ function config(overrides) {
   return deepmerge(defaultConfig, overrides || {});
 }
 
-// frontend
+// frontend config
+
 var frontendConfig = config({
   entry: [
    './static/main.js',
@@ -47,8 +70,20 @@ var frontendConfig = config({
    module: {
      loaders: [
        {test: /\.js$/, exclude: /node_modules/, loaders: ['babel'] },
-       {test: /\.scss$/, loader: 'style!css!sass'}
+       {test: /\.postcss$/, loader: 'style!css!postcss'}
      ]
+   },
+   postcss: function () {
+       return [
+          precss,
+          cssnext,
+          autoprefixer,
+          autoreset({
+            reset: {
+              'box-sizing': 'border-box'
+            }
+          })
+       ];
    },
   plugins: [
     new webpack.optimize.OccurenceOrderPlugin(),
@@ -57,7 +92,7 @@ var frontendConfig = config({
   ]
 });
 
-// backend
+// backend config
 
 var nodeModules = fs.readdirSync('node_modules')
   .filter(function(x) {
@@ -101,22 +136,7 @@ var backendConfig = config({
   ]
 });
 
-// tasks
-
-function onBuild(done) {
-  return function(err, stats) {
-    if(err) {
-      console.log('Error', err);
-    }
-    else {
-      console.log(stats.toString());
-    }
-
-    if(done) {
-      done();
-    }
-  };
-}
+// gulp tasks
 
 gulp.task('frontend-build', function(done) {
   webpack(frontendConfig).run(onBuild(done));
