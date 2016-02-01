@@ -5,7 +5,7 @@
 2. `gulp run`
 
 ### Layout
-##### Server: 
+##### Server:
   - /src : Source files for server
   - /build : Server build
 
@@ -16,7 +16,7 @@
 ### Features
 - Webpack & HMR on client and server code! [https://github.com/jlongster/monkey-hot-loader](https://github.com/jlongster/monkey-hot-loader)
 - Socketcluster / Express backend
-- React / SASS frontend
+- React / postcss frontend (with precss and cssnext)
 - Browser-sync (for updating/reloading static .html)
 
 Credit for the initial setup: [http://jlongster.com/](http://jlongster.com/)
