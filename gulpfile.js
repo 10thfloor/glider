@@ -10,14 +10,27 @@ var WebpackDevServer = require('webpack-dev-server');
 var httpProxy = require('http-proxy');
 var http = require('http');
 var browserSync = require('browser-sync');
+var stripCode = require('gulp-strip-code');
+var closureCompiler = require('gulp-closure-compiler');
+var uglify = require('gulp-uglify');
 
 // postcss
+
 var precss = require('precss');
 var autoprefixer = require('autoprefixer');
 var autoreset = require('postcss-autoreset');
 var cssnext = require('postcss-cssnext');
 
 // util
+
+var defaultConfig = {
+
+};
+
+var nodeModules = fs.readdirSync('node_modules')
+  .filter(function(x) {
+    return ['.bin'].indexOf(x) === -1;
+});
 
 var deepmerge = new DeepMerge(function(target, source) {
   if(target instanceof Array) {
@@ -41,36 +54,37 @@ function onBuild(done) {
   };
 }
 
-// generic config
+function config(overrides) {
+  return deepmerge(defaultConfig, overrides || {});
+}
 
-var defaultConfig = {};
+// generic config
 
 if(process.env.NODE_ENV !== 'production') {
   defaultConfig.devtool = 'eval-source-map';
   defaultConfig.debug = true;
 }
 
-function config(overrides) {
-  return deepmerge(defaultConfig, overrides || {});
-}
-
 // frontend config
 
 var frontendConfig = config({
   entry: [
-   './static/main.js',
+   './web.browser/src/js/main.js',
    'webpack-dev-server/client?http://0.0.0.0:9000',
    'webpack/hot/dev-server'
    ],
    output: {
-     path: path.join(__dirname, 'static/build'),
-     publicPath: 'http://localhost:9000/build',
+     path: path.resolve(__dirname, './web.browser/build'),
+     publicPath: 'http://localhost:3000/',
      filename: 'frontend.js'
    },
    module: {
      loaders: [
        {test: /\.js$/, exclude: /node_modules/, loaders: ['babel'] },
        {test: /\.postcss$/, loader: 'style!css!postcss'}
+     ],
+     postloaders: [
+       {test: /\.js$/, exclude: /node_modules/, loaders: ['uglify'] }
      ]
    },
    postcss: function () {
@@ -94,20 +108,16 @@ var frontendConfig = config({
 
 // backend config
 
-var nodeModules = fs.readdirSync('node_modules')
-  .filter(function(x) {
-    return ['.bin'].indexOf(x) === -1;
-  });
-
 var backendConfig = config({
   entry: [
     'webpack/hot/signal.js',
-    './src/main.js'
+    './server/src/main.js'
   ],
   target: 'node',
   output: {
-    path: path.join(__dirname, 'build'),
-    filename: 'backend.js'
+    path: path.resolve(__dirname, './server/build'),
+    publicPath: 'http://localhost:3000/',
+    filename: 'app.js'
   },
   node: {
     __dirname: true,
@@ -127,7 +137,7 @@ var backendConfig = config({
       {test: /\.js$/, exclude: /node_modules/, loaders: ['monkey-hot', 'babel'] }
     ]
   },
-  recordsPath: path.join(__dirname, 'build/_records'),
+  recordsPath: path.resolve(__dirname, './server/build/_records'),
   plugins: [
     new webpack.IgnorePlugin(/\.(css|less)$/),
     new webpack.BannerPlugin('require("source-map-support").install();',
@@ -138,7 +148,36 @@ var backendConfig = config({
 
 // gulp tasks
 
-gulp.task('frontend-build', function(done) {
+gulp.task('copy', function () {
+  return gulp
+    .src('./web.browser/src/index.html')
+    .pipe(gulp.dest('./web.browser/build'));
+});
+
+gulp.task('build-deploy-bundle', ['frontend-build', 'backend-build-production'], function () {
+  gulp
+    .src('./web.browser/build/frontend.js')
+    .pipe(closureCompiler({
+      compilerPath: 'compiler.jar',
+      fileName: 'frontend.js',
+      compilerFlags: {
+        compilation_level: 'ADVANCED_OPTIMIZATIONS',
+        output_wrapper: '(function(){%output%}).call(window);',
+        warning_level: 'VERBOSE'
+      }
+    }))
+    .pipe(uglify())
+    .pipe(gulp.dest('./.deploy/bundle/public'));
+  gulp
+    .src('./server/build/app.js')
+    .pipe(gulp.dest('./.deploy/bundle'));
+  gulp
+    .src('./server/src/socketcluster/**/*.*')
+    .pipe(gulp.dest('./.deploy/bundle/socketcluster'));
+});
+
+
+gulp.task('frontend-build', ['copy'], function(done) {
   webpack(frontendConfig).run(onBuild(done));
 });
 
@@ -185,7 +224,7 @@ gulp.task('frontend-watch', function() {
 
   new WebpackDevServer(webpack(frontendConfig), {
     publicPath: frontendConfig.output.publicPath,
-    contentBase: './static',
+    contentBase: './web.browser/build',
     historyApiFallback: true,
     hot: true,
     stats: {
@@ -207,8 +246,8 @@ gulp.task('frontend-watch', function() {
   });
 
   browserSync.init({
-    baseDir: './static',
-    files: ['./static/index.html'],
+    baseDir: './web.browser/build',
+    files: ['./web.browser/build/index.html'],
     proxy: {
         target: 'localhost:9000',
         ws: true
@@ -218,9 +257,23 @@ gulp.task('frontend-watch', function() {
     open: true
   });
 
+  gulp.watch('./web.browser/src/index.html', ['copy']);
+
 });
 
-gulp.task('backend-build', function(done) {
+gulp.task('strip', function(){
+  gulp.src(['./web.browser/js/**/*.js', './server/src/**/*.js'])
+  .pipe(stripCode({
+      start_comment: 'remove-prod',
+      end_comment: 'end-remove-prod'
+    }));
+});
+
+gulp.task('backend-build',function(done) {
+  webpack(backendConfig).run(onBuild(done));
+});
+
+gulp.task('backend-build-production', ['strip'], function(done) {
   webpack(backendConfig).run(onBuild(done));
 });
 
@@ -243,7 +296,7 @@ gulp.task('run', ['backend-watch', 'frontend-watch'], function() {
     execMap: {
       js: 'node'
     },
-    script: path.join(__dirname, 'build/backend'),
+    script: path.join(__dirname, '/server/build/app'),
     ignore: ['*'],
     watch: ['foo/'],
     ext: 'noop'

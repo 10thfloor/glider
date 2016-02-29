@@ -1,0 +1,56 @@
+{
+  "nextFreeModuleId": 20,
+  "modules": {
+    "byIdentifier": {
+      "multi main": 0,
+      "node_modules/webpack/hot/signal.js": 1,
+      "node_modules/webpack/hot/log-apply-result.js": 2,
+      "node_modules/monkey-hot-loader/index.js!node_modules/babel-loader/index.js!src/main.js": 3,
+      "node_modules/monkey-hot-loader/index.js!node_modules/babel-loader/index.js!src/app.js": 4,
+      "external \"path\"": 5,
+      "external \"http\"": 6,
+      "external \"express\"": 7,
+      "external \"socket.io\"": 8,
+      "node_modules/monkey-hot-loader/index.js!node_modules/babel-loader/index.js!src/index.js": 9,
+      "external \"transducers.js\"": 10,
+      "node_modules/monkey-hot-loader/index.js!node_modules/babel-loader/index.js!src/page.js": 11,
+      "node_modules/monkey-hot-loader/index.js!node_modules/babel-loader/index.js!src/socketcluster/worker.js": 12,
+      "external \"fs\"": 13,
+      "external \"serve-static\"": 14,
+      "external \"socketcluster\"": 15,
+      "external \"commonjssocketcluster\"": 16,
+      "node_modules/babel-loader/index.js!src/main.js": 17,
+      "node_modules/monkey-hot-loader/index.js!node_modules/babel-loader/index.js!server/main.js": 18,
+      "node_modules/monkey-hot-loader/index.js!node_modules/babel-loader/index.js!server/src/main.js": 19
+    }
+  },
+  "nextFreeChunkId": 1,
+  "chunks": {
+    "byName": {
+      "main": 0
+    },
+    "byBlocks": {}
+  },
+  "prepreHash": "5ce6e8fe7eebc017b5a0",
+  "preHash": "0762dd399e4da0157c83",
+  "hash": "7137449840e4eeddbeaf",
+  "moduleHashs": {
+    "multi main": "6af6b8447d743b394686b8390b20bab8",
+    "/Users/MK/Desktop/RED/ultim/node_modules/webpack/hot/signal.js": "76bf5ea5788933e8a7dd2c8d335e8f27",
+    "/Users/MK/Desktop/RED/ultim/node_modules/webpack/hot/log-apply-result.js": "7cd41a95be6ba16cefccb5d39036449c",
+    "external \"socketcluster\"": "9bf31c7ff062936a96d3c8bd1f8f2ff3",
+    "/Users/MK/Desktop/RED/ultim/node_modules/monkey-hot-loader/index.js!/Users/MK/Desktop/RED/ultim/node_modules/babel-loader/index.js!/Users/MK/Desktop/RED/ultim/server/src/main.js": "9ede424077524a1d0a25a08e20308123"
+  },
+  "chunkHashs": {
+    "0": "800097d512ab6462ef2c49a70b54b589"
+  },
+  "chunkModuleIds": {
+    "0": [
+      0,
+      1,
+      2,
+      15,
+      19
+    ]
+  }
+}
