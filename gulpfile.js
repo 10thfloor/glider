@@ -2,6 +2,7 @@
 
 var gulp = require('gulp');
 var webpack = require('webpack');
+var webpackStream = require('webpack-stream');
 var path = require('path');
 var fs = require('fs');
 var DeepMerge = require('deep-merge');
@@ -117,7 +118,7 @@ var backendConfig = config({
   output: {
     path: path.resolve(__dirname, './server/build'),
     publicPath: 'http://localhost:3000/',
-    filename: 'app.js'
+    filename: 'main.js'
   },
   node: {
     __dirname: true,
@@ -154,28 +155,50 @@ gulp.task('copy', function () {
     .pipe(gulp.dest('./web.browser/build'));
 });
 
-gulp.task('build-deploy-bundle', ['frontend-build', 'backend-build-production'], function () {
+gulp.task('build-deploy-bundle', ['strip'], function () {
   gulp
-    .src('./web.browser/build/frontend.js')
-    .pipe(closureCompiler({
-      compilerPath: 'compiler.jar',
-      fileName: 'frontend.js',
-      compilerFlags: {
-        compilation_level: 'ADVANCED_OPTIMIZATIONS',
-        output_wrapper: '(function(){%output%}).call(window);',
-        warning_level: 'VERBOSE'
-      }
-    }))
-    .pipe(uglify())
+    .src('./web.browser/src/index.html')
     .pipe(gulp.dest('./.deploy/bundle/public'));
   gulp
-    .src('./server/build/app.js')
+    .src('./web.browser/src/js/main.js')
+    .pipe(webpackStream({
+       output: {
+         filename: 'frontend.js'
+       },
+       module: {
+         loaders: [
+           {test: /\.js$/, exclude: /node_modules/, loaders: ['babel'] },
+           {test: /\.postcss$/, loader: 'style!css!postcss'}
+         ],
+         postloaders: [
+           {test: /\.js$/, exclude: /node_modules/, loaders: ['uglify'] }
+         ]
+       },
+       postcss: function () {
+           return [
+              precss,
+              cssnext,
+              autoprefixer,
+              autoreset({
+                reset: {
+                  'box-sizing': 'border-box'
+                }
+              })
+           ];
+       },
+      plugins: [
+        new webpack.optimize.OccurenceOrderPlugin(),
+        new webpack.NoErrorsPlugin()
+      ]
+    }))
+    .pipe(gulp.dest('./.deploy/bundle/public'));
+  gulp
+    .src('./server/src/main.js')
     .pipe(gulp.dest('./.deploy/bundle'));
   gulp
     .src('./server/src/socketcluster/**/*.*')
     .pipe(gulp.dest('./.deploy/bundle/socketcluster'));
 });
-
 
 gulp.task('frontend-build', ['copy'], function(done) {
   webpack(frontendConfig).run(onBuild(done));
@@ -274,7 +297,9 @@ gulp.task('backend-build',function(done) {
 });
 
 gulp.task('backend-build-production', ['strip'], function(done) {
-  webpack(backendConfig).run(onBuild(done));
+  webpack({
+
+  }).run(onBuild(done));
 });
 
 gulp.task('backend-watch', function(done) {

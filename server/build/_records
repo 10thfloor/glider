@@ -31,24 +31,26 @@
     },
     "byBlocks": {}
   },
-  "prepreHash": "5ce6e8fe7eebc017b5a0",
-  "preHash": "0762dd399e4da0157c83",
-  "hash": "7137449840e4eeddbeaf",
+  "prepreHash": "d8d139c6be43362911b6",
+  "preHash": "a13500ff15f72bde836b",
+  "hash": "70007125dd8573b8833b",
   "moduleHashs": {
     "multi main": "6af6b8447d743b394686b8390b20bab8",
     "/Users/MK/Desktop/RED/ultim/node_modules/webpack/hot/signal.js": "76bf5ea5788933e8a7dd2c8d335e8f27",
     "/Users/MK/Desktop/RED/ultim/node_modules/webpack/hot/log-apply-result.js": "7cd41a95be6ba16cefccb5d39036449c",
+    "external \"path\"": "e4da3b7fbbce2345d7772b0674a318d5",
     "external \"socketcluster\"": "9bf31c7ff062936a96d3c8bd1f8f2ff3",
-    "/Users/MK/Desktop/RED/ultim/node_modules/monkey-hot-loader/index.js!/Users/MK/Desktop/RED/ultim/node_modules/babel-loader/index.js!/Users/MK/Desktop/RED/ultim/server/src/main.js": "9ede424077524a1d0a25a08e20308123"
+    "/Users/MK/Desktop/RED/ultim/node_modules/monkey-hot-loader/index.js!/Users/MK/Desktop/RED/ultim/node_modules/babel-loader/index.js!/Users/MK/Desktop/RED/ultim/server/src/main.js": "e9b681492ce436ea4de46be076a21441"
   },
   "chunkHashs": {
-    "0": "800097d512ab6462ef2c49a70b54b589"
+    "0": "fe07fc948dde5454bbcefcf7d04d6353"
   },
   "chunkModuleIds": {
     "0": [
       0,
       1,
       2,
+      5,
       15,
       19
     ]

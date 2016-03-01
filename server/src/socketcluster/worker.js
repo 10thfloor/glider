@@ -5,8 +5,8 @@ var path = require('path');
 
 var STATIC_PATHS = {};
 if(process.env.NODE_ENV === 'production'){
-  STATIC_PATHS.dir = './public';
-  STATIC_PATHS.index = './public/index.html';
+  STATIC_PATHS.dir = '../public';
+  STATIC_PATHS.index = '../public/index.html';
 }else{
   STATIC_PATHS.dir = '../../static';
   STATIC_PATHS.index = '../../static/index.html';
@@ -27,7 +27,7 @@ module.exports.run = function (worker) {
   });
 
   httpServer.on('request', app);
-
+  
   scServer.on('connection', function (socket) {
 
     socket.on('hello', function (data) {

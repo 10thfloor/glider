@@ -2,21 +2,19 @@
 'use strict';
 
 var SocketCluster = require('socketcluster').SocketCluster;
+var path = require('path');
 
 var STATIC_PATHS = {};
-if(process.env.NODE_ENV === 'production'){
-  STATIC_PATHS.worker = __dirname + '/socketcluster/worker.js';
-  STATIC_PATHS.broker = __dirname + '/socketcluster/broker.js';
-}else{
-  STATIC_PATHS.worker = __dirname + '/socketcluster/worker.js';
-  STATIC_PATHS.broker = __dirname + '/socketcluster/broker.js';
-}
+
+  STATIC_PATHS.worker = path.resolve(__dirname + '/socketcluster/worker.js');
+  STATIC_PATHS.broker = path.resolve(__dirname + '/socketcluster/broker.js');
+
 
 var socketCluster = new SocketCluster({
   workers: 1,
   brokers: 1,
   port: 8000,
-  appName: 'app',
+  appName: 'main',
   workerController: STATIC_PATHS.worker,
   brokerController: STATIC_PATHS.broker,
   socketChannelLimit: 1000,
